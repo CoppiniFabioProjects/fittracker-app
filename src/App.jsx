@@ -35,7 +35,6 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-// Le tue chiavi corrette inserite direttamente
 const firebaseConfig = {
   apiKey: "AIzaSyB6LqmDyp30DoHbiFCpSxM2LNps_Md0WWQ",
   authDomain: "fittracker-cyber.firebaseapp.com",
@@ -50,7 +49,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = 'fit-tracker-cyber-v3'; // ID fisso per la tua app
+const appId = 'fit-tracker-cyber-v3';
 
 // --- CUSTOM STYLES & FONTS ---
 const GlobalStyles = () => (
@@ -226,6 +225,7 @@ const WeeklyChart = ({ logs }) => {
 };
 
 // --- APP PRINCIPALE ---
+// La parola chiave 'default' qui sotto è quella che risolve l'errore
 export default function FitTracker() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -248,9 +248,8 @@ export default function FitTracker() {
   const [speed, setSpeed] = useState(0);
 
   useEffect(() => {
-    // Auth Check Init
     const initAuth = async () => {
-      // Per Vercel, non usiamo token custom, ci basiamo sul login standard
+      // Per Vercel usiamo il login standard di Firebase
     };
     initAuth();
     
