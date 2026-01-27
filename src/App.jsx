@@ -35,13 +35,16 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-const defaultConfig = {
-  apiKey: "TUO_API_KEY",
-  authDomain: "TUO_PROJECT_ID.firebaseapp.com",
-  projectId: "TUO_PROJECT_ID",
-  storageBucket: "TUO_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "TUO_MESSAGING_SENDER_ID",
-  appId: "TUO_APP_ID"
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB6LqmDyp30DoHbiFCpSxM2LNps_Md0WWQ",
+  authDomain: "fittracker-cyber.firebaseapp.com",
+  projectId: "fittracker-cyber",
+  storageBucket: "fittracker-cyber.firebasestorage.app",
+  messagingSenderId: "757340394897",
+  appId: "1:757340394897:web:585e102a70b7d307b4f630",
+  measurementId: "G-G6QZLNXCN3"
 };
 
 const firebaseConfig = JSON.parse(window.__firebase_config || JSON.stringify(defaultConfig));
