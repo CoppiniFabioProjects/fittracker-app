@@ -35,8 +35,8 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-// Configurazione corretta con le tue chiavi reali
-const defaultConfig = {
+// Le tue chiavi corrette inserite direttamente
+const firebaseConfig = {
   apiKey: "AIzaSyB6LqmDyp30DoHbiFCpSxM2LNps_Md0WWQ",
   authDomain: "fittracker-cyber.firebaseapp.com",
   projectId: "fittracker-cyber",
@@ -46,11 +46,11 @@ const defaultConfig = {
   measurementId: "G-G6QZLNXCN3"
 };
 
-const firebaseConfig = JSON.parse(window.__firebase_config || JSON.stringify(defaultConfig));
+// Inizializzazione App
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = window.__app_id || 'fit-tracker-demo';
+const appId = 'fit-tracker-cyber-v3'; // ID fisso per la tua app
 
 // --- CUSTOM STYLES & FONTS ---
 const GlobalStyles = () => (
@@ -248,12 +248,12 @@ export default function FitTracker() {
   const [speed, setSpeed] = useState(0);
 
   useEffect(() => {
+    // Auth Check Init
     const initAuth = async () => {
-      if (window.__initial_auth_token) {
-        try { await signInWithCustomToken(auth, window.__initial_auth_token); } catch (e) { console.error(e); }
-      }
+      // Per Vercel, non usiamo token custom, ci basiamo sul login standard
     };
     initAuth();
+    
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (!u) { setLogs([]); setLoading(false); }
