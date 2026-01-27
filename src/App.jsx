@@ -225,8 +225,8 @@ const WeeklyChart = ({ logs }) => {
 };
 
 // --- APP PRINCIPALE ---
-// La parola chiave 'default' qui sotto è quella che risolve l'errore
-export default function FitTracker() {
+// Funzione definita come variabile e poi esportata
+const FitTracker = () => {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -517,3 +517,5 @@ export default function FitTracker() {
     </>
   );
 }
+
+export default FitTracker; // EXPORT ESPLICITO AGGIUNTO
