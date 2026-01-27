@@ -272,7 +272,8 @@ const WeeklyChart = ({ logs }) => {
 };
 
 // --- APP PRINCIPALE ---
-const FitTracker = () => {
+// MODIFICA CRUCIALE: Export default direttamente sulla funzione
+export default function FitTracker() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -583,5 +584,3 @@ const FitTracker = () => {
     </>
   );
 }
-
-export default FitTracker; // EXPORT ESPLICITO AGGIUNTO
