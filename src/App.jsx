@@ -35,16 +35,14 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB6LqmDyp30DoHbiFCpSxM2LNps_Md0WWQ",
-  authDomain: "fittracker-cyber.firebaseapp.com",
-  projectId: "fittracker-cyber",
-  storageBucket: "fittracker-cyber.firebasestorage.app",
-  messagingSenderId: "757340394897",
-  appId: "1:757340394897:web:585e102a70b7d307b4f630",
-  measurementId: "G-G6QZLNXCN3"
+// SOSTITUISCI CON LE TUE CHIAVI VERE PRESE DA FIREBASE CONSOLE
+const defaultConfig = {
+  apiKey: "TUO_API_KEY",
+  authDomain: "TUO_PROJECT_ID.firebaseapp.com",
+  projectId: "TUO_PROJECT_ID",
+  storageBucket: "TUO_PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "TUO_MESSAGING_SENDER_ID",
+  appId: "TUO_APP_ID"
 };
 
 const firebaseConfig = JSON.parse(window.__firebase_config || JSON.stringify(defaultConfig));
@@ -53,7 +51,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = window.__app_id || 'fit-tracker-demo';
 
-// --- CUSTOM STYLES & FONTS INJECTION ---
+// --- CUSTOM STYLES & FONTS ---
 const GlobalStyles = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Inter:wght@300;400;600&display=swap');
@@ -119,7 +117,6 @@ const GlobalStyles = () => (
     }
     @keyframes shine { to { background-position: 200% center; } }
     
-    /* Chart Animations */
     .bar-animate { animation: growUp 1s ease-out forwards; transform-origin: bottom; transform: scaleY(0); }
     @keyframes growUp { to { transform: scaleY(1); } }
   `}</style>
@@ -184,7 +181,7 @@ const DarkInput = ({ label, type = "text", value, onChange, placeholder, disable
   </div>
 );
 
-// --- COMPONENT: WEEKLY CHART ---
+// --- WEEKLY CHART ---
 const WeeklyChart = ({ logs }) => {
   const days = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -197,7 +194,6 @@ const WeeklyChart = ({ logs }) => {
       const dayLogs = logs.filter(l => l.dateString === dateStr);
       const inCal = dayLogs.filter(l => l.type === 'meal').reduce((acc, c) => acc + (c.calories || 0), 0);
       const outCal = dayLogs.filter(l => l.type === 'workout').reduce((acc, c) => acc + (c.calories || 0), 0);
-      // Get Short Day Name (Lun, Mar...)
       const [d, m, y] = dateStr.split('/');
       const dateObj = new Date(y, m-1, d);
       const dayName = dateObj.toLocaleDateString('it-IT', { weekday: 'short' }).slice(0, 1);
@@ -212,24 +208,14 @@ const WeeklyChart = ({ logs }) => {
     <div className="w-full h-48 flex items-end justify-between gap-2 mt-4 select-none">
       {days.map((d, i) => (
         <div key={i} className="flex-1 flex flex-col items-center gap-2 group relative">
-          {/* Tooltip */}
           <div className="absolute bottom-full mb-2 bg-slate-800 text-[10px] p-2 rounded border border-slate-700 opacity-0 group-hover:opacity-100 transition-opacity z-20 pointer-events-none whitespace-nowrap">
             {d.dateStr}<br/>
             <span className="text-orange-400">In: {d.inCal}</span><br/>
             <span className="text-emerald-400">Out: {d.outCal}</span>
           </div>
-          
           <div className="w-full h-32 flex items-end justify-center gap-1 relative">
-            {/* Meal Bar */}
-            <div 
-              className="w-2 bg-orange-500/80 rounded-t-sm bar-animate hover:bg-orange-400 transition-colors"
-              style={{ height: `${(d.inCal / maxVal) * 100}%` }}
-            />
-            {/* Workout Bar */}
-            <div 
-              className="w-2 bg-emerald-500/80 rounded-t-sm bar-animate hover:bg-emerald-400 transition-colors"
-              style={{ height: `${(d.outCal / maxVal) * 100}%` }}
-            />
+            <div className="w-2 bg-orange-500/80 rounded-t-sm bar-animate hover:bg-orange-400 transition-colors" style={{ height: `${(d.inCal / maxVal) * 100}%` }} />
+            <div className="w-2 bg-emerald-500/80 rounded-t-sm bar-animate hover:bg-emerald-400 transition-colors" style={{ height: `${(d.outCal / maxVal) * 100}%` }} />
           </div>
           <span className="text-[10px] text-slate-500 uppercase font-bold">{d.dayName}</span>
         </div>
@@ -238,19 +224,16 @@ const WeeklyChart = ({ logs }) => {
   );
 };
 
-// --- APP PRINCIPALE ---
-
+// --- APP PRINCIPALE (NOTA: export default È FONDAMENTALE QUI) ---
 export default function FitTracker() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Settings
   const [dailyTarget, setDailyTarget] = useState(1500);
   const [isEditingTarget, setIsEditingTarget] = useState(false);
 
-  // Forms
   const [mealName, setMealName] = useState('');
   const [mealCals, setMealCals] = useState('');
   const [workoutType, setWorkoutType] = useState('');
@@ -258,13 +241,11 @@ export default function FitTracker() {
   const [workoutCals, setWorkoutCals] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Calculator
   const [showCalculator, setShowCalculator] = useState(false);
   const [weight, setWeight] = useState('');
   const [distance, setDistance] = useState('');
   const [speed, setSpeed] = useState(0);
 
-  // Auth & Data
   useEffect(() => {
     const initAuth = async () => {
       if (window.__initial_auth_token) {
@@ -282,7 +263,6 @@ export default function FitTracker() {
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    // Nota: In un'app reale, useremmo un documento 'settings' separato per il target
     const logsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'logs');
     const unsubscribe = onSnapshot(logsRef, (snapshot) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -295,7 +275,6 @@ export default function FitTracker() {
     return () => unsubscribe();
   }, [user]);
 
-  // Logic Handlers
   const handleCalculator = () => {
     if (weight && distance && workoutDuration) {
       const w = parseFloat(weight), d = parseFloat(distance), t = parseFloat(workoutDuration);
@@ -332,7 +311,6 @@ export default function FitTracker() {
     if (confirm("Eliminare voce?")) await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'logs', id));
   };
 
-  // Stats
   const stats = useMemo(() => {
     const today = new Date().toLocaleDateString('it-IT');
     const todayLogs = logs.filter(log => log.dateString === today);
@@ -340,10 +318,8 @@ export default function FitTracker() {
     const caloriesOut = todayLogs.filter(l => l.type === 'workout').reduce((acc, c) => acc + (c.calories || 0), 0);
     const water = todayLogs.filter(l => l.type === 'water').reduce((acc, c) => acc + (c.amount || 0), 0);
     
-    // Streak Logic
     let streak = 0;
     if (logs.length > 0) {
-      // Logic semplificata per demo: conta giorni unici nel log
       const uniqueDays = new Set(logs.map(l => l.dateString));
       streak = uniqueDays.size; 
     }
@@ -351,7 +327,6 @@ export default function FitTracker() {
     return { caloriesIn, caloriesOut, net: caloriesIn - caloriesOut, water, streak };
   }, [logs]);
 
-  // --- RENDER ---
   if (loading && user) return <div className="flex h-screen items-center justify-center bg-slate-950 text-purple-500 font-display text-xl tracking-widest animate-pulse">SYSTEM LOADING...</div>;
 
   return (
@@ -391,7 +366,6 @@ export default function FitTracker() {
         </nav>
 
         <main className="container max-w-2xl mx-auto px-4 pt-32 space-y-8 relative z-10">
-
           {!user && (
              <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
                 <SpotlightCard className="text-center py-16 border-purple-500/30">
@@ -419,8 +393,6 @@ export default function FitTracker() {
 
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  
-                  {/* Stats Grid */}
                   <div className="grid grid-cols-2 gap-4">
                     <SpotlightCard>
                       <div className="flex items-center gap-2 text-orange-400 mb-3"><Utensils size={16} /><span className="text-[10px] font-bold uppercase tracking-widest">Input</span></div>
@@ -433,8 +405,6 @@ export default function FitTracker() {
                       <div className="text-xs text-slate-500">Kcal Bruciate</div>
                     </SpotlightCard>
                   </div>
-
-                  {/* Main Goal Card with Edit */}
                   <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 p-1 group">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-900/40 to-slate-900/40 blur-xl" />
                     <div className="bg-slate-950/80 backdrop-blur-xl rounded-xl p-6 relative z-10 flex items-center justify-between">
@@ -459,10 +429,7 @@ export default function FitTracker() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Water & Chart Row */}
                   <div className="grid md:grid-cols-2 gap-4">
-                    {/* Water Tracker */}
                     <SpotlightCard className="flex flex-col justify-between h-full border-blue-500/30">
                        <div className="flex items-center justify-between mb-4">
                          <div className="flex items-center gap-2 text-blue-400"><Droplets size={16} /><span className="text-[10px] font-bold uppercase tracking-widest">Idratazione</span></div>
@@ -475,15 +442,11 @@ export default function FitTracker() {
                           +250ml Acqua
                        </UltraButton>
                     </SpotlightCard>
-
-                    {/* Chart Card */}
                     <SpotlightCard>
                       <div className="flex items-center gap-2 text-purple-400 mb-2"><Activity size={16} /><span className="text-[10px] font-bold uppercase tracking-widest">7 Days Analysis</span></div>
                       <WeeklyChart logs={logs} />
                     </SpotlightCard>
                   </div>
-
-                  {/* Activity Log */}
                   <div>
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1">Activity Stream</h3>
                     <div className="space-y-3">
