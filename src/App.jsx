@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  signInWithPopup,
+  signInWithRedirect, // <--- MODIFICA QUI: Usiamo Redirect invece di Popup
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
@@ -285,7 +285,7 @@ const WeeklyChart = ({ logs }) => {
 };
 
 // --- APP PRINCIPALE ---
-function FitTracker() {
+export default function FitTracker() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -354,6 +354,16 @@ function FitTracker() {
     if (!isoDateString) return new Date().toLocaleDateString('it-IT');
     const [year, month, day] = isoDateString.split('-');
     return `${day}/${month}/${year}`;
+  };
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      // USARE SIGNINWITHREDIRECT per mobile
+      await signInWithRedirect(auth, provider);
+    } catch (error) {
+      console.error("Login error", error);
+    }
   };
 
   const addLog = async (type, data) => {
@@ -453,7 +463,7 @@ function FitTracker() {
                   <button onClick={() => signOut(auth)} className="text-slate-400 hover:text-red-400 transition-colors"><LogOut size={20} /></button>
                 </>
               ) : (
-                <UltraButton onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} className="py-2 px-4 text-xs !shadow-none"><LogIn size={14} /> Accedi</UltraButton>
+                <UltraButton onClick={handleLogin} className="py-2 px-4 text-xs !shadow-none"><LogIn size={14} /> Accedi</UltraButton>
               )}
             </div>
           </div>
@@ -469,7 +479,7 @@ function FitTracker() {
                     Sincronizza i tuoi dati bio-metrici nel cloud privato.<br/>
                     Sistema protetto da <span className="text-fuchsia-400">Fabio Security Protocol</span>.
                   </p>
-                  <UltraButton onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} className="mx-auto w-full sm:w-auto px-8">Inizializza Login <LogIn size={16}/></UltraButton>
+                  <UltraButton onClick={handleLogin} className="mx-auto w-full sm:w-auto px-8">Inizializza Login <LogIn size={16}/></UltraButton>
                 </SpotlightCard>
              </div>
           )}
@@ -652,5 +662,3 @@ function FitTracker() {
     </>
   );
 }
-
-export default FitTracker; // EXPORT ESPLICITO AGGIUNTO
