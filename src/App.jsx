@@ -33,7 +33,10 @@ import {
   Droplets,
   Trophy,
   Crown,
-  Code2
+  Code2,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
@@ -156,6 +159,16 @@ const GlobalStyles = () => (
         border: 1px solid rgba(255, 255, 255, 0.05);
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
     }
+    
+    /* Calendar Input Styles */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+        cursor: pointer;
+        opacity: 0.6;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
   `}</style>
 );
 
@@ -272,13 +285,15 @@ const WeeklyChart = ({ logs }) => {
 };
 
 // --- APP PRINCIPALE ---
-// MODIFICA CRUCIALE: Export default direttamente sulla funzione
 export default function FitTracker() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   
+  // Data selection state (Default: Today in YYYY-MM-DD for inputs)
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
   const [dailyTarget, setDailyTarget] = useState(1500);
   const [isEditingTarget, setIsEditingTarget] = useState(false);
 
@@ -334,13 +349,27 @@ export default function FitTracker() {
   };
   useEffect(() => { if (showCalculator) handleCalculator(); }, [weight, distance, workoutDuration]);
 
+  // Helper per convertire la data ISO (YYYY-MM-DD) in formato IT (DD/MM/YYYY) per il salvataggio
+  const formatDateForStorage = (isoDateString) => {
+    if (!isoDateString) return new Date().toLocaleDateString('it-IT');
+    const [year, month, day] = isoDateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   const addLog = async (type, data) => {
     if (!user) return;
     setSubmitting(true);
     try {
+      // Usiamo selectedDate per la registrazione
+      const storageDate = formatDateForStorage(selectedDate);
+      
       await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'logs'), {
-        type, ...data, createdAt: serverTimestamp(), dateString: new Date().toLocaleDateString('it-IT')
+        type, 
+        ...data, 
+        createdAt: serverTimestamp(), 
+        dateString: storageDate 
       });
+      
       if (type === 'meal') { setMealName(''); setMealCals(''); }
       if (type === 'workout') { setWorkoutType(''); setWorkoutDuration(''); setWorkoutCals(''); setDistance(''); setWeight(''); setSpeed(0); setShowCalculator(false); }
       setActiveTab('dashboard');
@@ -356,13 +385,29 @@ export default function FitTracker() {
     if (confirm("Eliminare voce?")) await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'logs', id));
   };
 
+  // Navigazione Giornaliera
+  const handlePrevDay = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(d.toISOString().split('T')[0]);
+  };
+
+  const handleNextDay = () => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + 1);
+    setSelectedDate(d.toISOString().split('T')[0]);
+  };
+
   const stats = useMemo(() => {
-    const today = new Date().toLocaleDateString('it-IT');
-    const todayLogs = logs.filter(log => log.dateString === today);
-    const caloriesIn = todayLogs.filter(l => l.type === 'meal').reduce((acc, c) => acc + (c.calories || 0), 0);
-    const caloriesOut = todayLogs.filter(l => l.type === 'workout').reduce((acc, c) => acc + (c.calories || 0), 0);
-    const water = todayLogs.filter(l => l.type === 'water').reduce((acc, c) => acc + (c.amount || 0), 0);
+    // Filtriamo in base alla data selezionata (selectedDate convertita in IT format)
+    const targetDateStr = formatDateForStorage(selectedDate);
     
+    const dayLogs = logs.filter(log => log.dateString === targetDateStr);
+    const caloriesIn = dayLogs.filter(l => l.type === 'meal').reduce((acc, c) => acc + (c.calories || 0), 0);
+    const caloriesOut = dayLogs.filter(l => l.type === 'workout').reduce((acc, c) => acc + (c.calories || 0), 0);
+    const water = dayLogs.filter(l => l.type === 'water').reduce((acc, c) => acc + (c.amount || 0), 0);
+    
+    // Streak non cambia in base alla selezione, è globale
     let streak = 0;
     if (logs.length > 0) {
       const uniqueDays = new Set(logs.map(l => l.dateString));
@@ -370,7 +415,7 @@ export default function FitTracker() {
     }
 
     return { caloriesIn, caloriesOut, net: caloriesIn - caloriesOut, water, streak };
-  }, [logs]);
+  }, [logs, selectedDate]);
 
   if (loading && user) return <div className="flex h-screen items-center justify-center bg-slate-950 text-fuchsia-500 font-display text-xl tracking-widest animate-pulse">SYSTEM LOADING...</div>;
 
@@ -431,6 +476,7 @@ export default function FitTracker() {
 
           {user && (
             <>
+              {/* MENU DI NAVIGAZIONE */}
               <div className="grid grid-cols-3 gap-4">
                 {[ { id: 'dashboard', icon: TrendingUp, label: 'Dash' }, { id: 'add-meal', icon: Utensils, label: 'Pasto' }, { id: 'add-workout', icon: Dumbbell, label: 'Sport' } ].map((tab) => (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -443,8 +489,25 @@ export default function FitTracker() {
                 ))}
               </div>
 
+              {/* DASHBOARD VIEW */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  
+                  {/* BARRA NAVIGAZIONE DATA */}
+                  <div className="flex items-center justify-between bg-slate-900/50 border border-slate-800 p-2 rounded-xl">
+                    <button onClick={handlePrevDay} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                        <ChevronLeft size={20} />
+                    </button>
+                    <div className="flex items-center gap-2 text-fuchsia-400 font-display font-bold">
+                        <CalendarDays size={18} />
+                        <span>{formatDateForStorage(selectedDate)}</span>
+                        {selectedDate === new Date().toISOString().split('T')[0] && <span className="text-[10px] bg-fuchsia-500/20 px-2 py-0.5 rounded text-fuchsia-200">OGGI</span>}
+                    </div>
+                    <button onClick={handleNextDay} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                        <ChevronRight size={20} />
+                    </button>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <SpotlightCard className="!border-fuchsia-500/20">
                       <div className="flex items-center gap-2 text-fuchsia-400 mb-3"><Utensils size={16} /><span className="text-[10px] font-bold uppercase tracking-widest">Input</span></div>
@@ -457,6 +520,8 @@ export default function FitTracker() {
                       <div className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Kcal Bruciate</div>
                     </SpotlightCard>
                   </div>
+                  
+                  {/* CALORIE BALANCE & TARGET */}
                   <div className="relative overflow-hidden rounded-2xl border border-slate-800 p-1 group hover:border-fuchsia-500/40 transition-colors duration-500">
                     <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-900/20 to-cyan-900/20 blur-xl" />
                     <div className="bg-slate-950/90 backdrop-blur-xl rounded-xl p-6 relative z-10 flex items-center justify-between">
@@ -489,6 +554,7 @@ export default function FitTracker() {
                       </div>
                     </div>
                   </div>
+
                   <div className="grid md:grid-cols-2 gap-4">
                     <SpotlightCard className="flex flex-col justify-between h-full !border-cyan-900/30">
                        <div className="flex items-center justify-between mb-4">
@@ -508,10 +574,10 @@ export default function FitTracker() {
                     </SpotlightCard>
                   </div>
                   <div>
-                    <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1 flex items-center gap-2"><Code2 size={12}/> Activity Logs</h3>
+                    <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1 flex items-center gap-2"><Code2 size={12}/> Activity Logs ({formatDateForStorage(selectedDate)})</h3>
                     <div className="space-y-3">
-                      {logs.length === 0 ? <div className="text-center py-12 border border-dashed border-slate-800 rounded-2xl text-slate-600 font-display text-sm tracking-widest">NO DATA FOUND</div> : 
-                        logs.map((log) => (
+                      {logs.filter(l => l.dateString === formatDateForStorage(selectedDate)).length === 0 ? <div className="text-center py-12 border border-dashed border-slate-800 rounded-2xl text-slate-600 font-display text-sm tracking-widest">NO DATA FOUND FOR THIS DAY</div> : 
+                        logs.filter(l => l.dateString === formatDateForStorage(selectedDate)).map((log) => (
                           <SpotlightCard key={log.id} className="p-4 flex items-center justify-between !bg-slate-950/50 hover:!bg-slate-900 !border-slate-800/50">
                             <div className="flex items-center gap-4">
                               <div className={`p-3 rounded-lg border border-white/5 ${log.type === 'meal' ? 'bg-fuchsia-500/10 text-fuchsia-400' : log.type === 'water' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
@@ -541,6 +607,7 @@ export default function FitTracker() {
                   <div className="flex items-center gap-3 mb-6"><div className="w-1 h-8 bg-fuchsia-500 shadow-[0_0_15px_#d946ef] rounded-full"></div><h2 className="text-2xl font-display font-bold text-white">Nuovo Pasto</h2></div>
                   <SpotlightCard>
                     <form onSubmit={(e) => { e.preventDefault(); if (mealName && mealCals) addLog('meal', { name: mealName, calories: parseInt(mealCals) }); }}>
+                      <DarkInput label="Data" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
                       <DarkInput label="Alimento" placeholder="Es. Pasta Carbonara" value={mealName} onChange={(e) => setMealName(e.target.value)} />
                       <DarkInput label="Kcal" type="number" placeholder="0" value={mealCals} onChange={(e) => setMealCals(e.target.value)} />
                       <div className="mt-8"><UltraButton type="submit" disabled={submitting || !mealName || !mealCals} className="w-full !border-fuchsia-500/50 hover:!bg-fuchsia-500/10"><PlusCircle size={18} /> REGISTRA DATO</UltraButton></div>
@@ -561,6 +628,7 @@ export default function FitTracker() {
                       </div>
                     )}
                     <form onSubmit={(e) => { e.preventDefault(); if (workoutType && workoutCals) addLog('workout', { name: workoutType, duration: parseInt(workoutDuration || 0), calories: parseInt(workoutCals), distance: distance ? parseFloat(distance) : null, speed: speed ? parseFloat(speed) : null }); }}>
+                      <DarkInput label="Data" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
                       <DarkInput label="Attività" placeholder="Es. Corsa" value={workoutType} onChange={(e) => setWorkoutType(e.target.value)} />
                       <div className="grid grid-cols-2 gap-4"><DarkInput label="Durata" type="number" placeholder="30" value={workoutDuration} onChange={(e) => setWorkoutDuration(e.target.value)} /><DarkInput label="Kcal" type="number" placeholder="200" value={workoutCals} onChange={(e) => setWorkoutCals(e.target.value)} /></div>
                       <div className="mt-8"><UltraButton type="submit" disabled={submitting || !workoutType || !workoutCals} className="w-full !border-cyan-500/50 hover:!bg-cyan-500/10 text-cyan-100 hover:text-white"><PlusCircle size={18} /> CONFERMA SESSIONE</UltraButton></div>
@@ -584,3 +652,5 @@ export default function FitTracker() {
     </>
   );
 }
+
+export default FitTracker; // EXPORT ESPLICITO AGGIUNTO
