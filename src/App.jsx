@@ -35,14 +35,15 @@ import {
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
-// SOSTITUISCI CON LE TUE CHIAVI VERE PRESE DA FIREBASE CONSOLE
+// Configurazione corretta con le tue chiavi reali
 const defaultConfig = {
-  apiKey: "TUO_API_KEY",
-  authDomain: "TUO_PROJECT_ID.firebaseapp.com",
-  projectId: "TUO_PROJECT_ID",
-  storageBucket: "TUO_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "TUO_MESSAGING_SENDER_ID",
-  appId: "TUO_APP_ID"
+  apiKey: "AIzaSyB6LqmDyp30DoHbiFCpSxM2LNps_Md0WWQ",
+  authDomain: "fittracker-cyber.firebaseapp.com",
+  projectId: "fittracker-cyber",
+  storageBucket: "fittracker-cyber.firebasestorage.app",
+  messagingSenderId: "757340394897",
+  appId: "1:757340394897:web:585e102a70b7d307b4f630",
+  measurementId: "G-G6QZLNXCN3"
 };
 
 const firebaseConfig = JSON.parse(window.__firebase_config || JSON.stringify(defaultConfig));
@@ -224,7 +225,7 @@ const WeeklyChart = ({ logs }) => {
   );
 };
 
-// --- APP PRINCIPALE (NOTA: export default È FONDAMENTALE QUI) ---
+// --- APP PRINCIPALE ---
 export default function FitTracker() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
