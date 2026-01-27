@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  signInWithRedirect, // <--- MODIFICA QUI: Usiamo Redirect invece di Popup
+  signInWithPopup, // TORNIAMO AL POPUP (Più stabile)
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
@@ -315,7 +315,11 @@ export default function FitTracker() {
     
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      if (!u) { setLogs([]); setLoading(false); }
+      // BUG FIX: Stop loading sia se u c'è, sia se non c'è.
+      if (!u) { 
+        setLogs([]); 
+      }
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -359,10 +363,11 @@ export default function FitTracker() {
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // USARE SIGNINWITHREDIRECT per mobile
-      await signInWithRedirect(auth, provider);
+      // BACK TO POPUP: Più robusto per le PWA
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Login error", error);
+      alert("Errore Login: " + error.message);
     }
   };
 
