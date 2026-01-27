@@ -2,8 +2,18 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Viewport bloccato per sembrare un'app nativa (no zoom) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>FitTracker Cyber</title>
+    
+    <!-- Collegamento al file Manifest (per Android/Chrome) -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Colore della barra di stato del telefono -->
+    <meta name="theme-color" content="#020617">
+    
+    <!-- Icona per iPhone (Apple Touch Icon) -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2964/2964514.png">
   </head>
   <body>
     <div id="root"></div>
