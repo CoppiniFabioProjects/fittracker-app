@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
-  signInWithPopup, // TORNIAMO AL POPUP (Più stabile)
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  signInWithCustomToken 
+  signInWithRedirect
 } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -36,7 +36,9 @@ import {
   Code2,
   ChevronLeft,
   ChevronRight,
-  CalendarDays
+  CalendarDays,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 // --- FIREBASE SETUP ---
@@ -49,6 +51,10 @@ const firebaseConfig = {
   appId: "1:757340394897:web:585e102a70b7d307b4f630",
   measurementId: "G-G6QZLNXCN3"
 };
+
+// --- GEMINI AI SETUP ---
+// ⚠️ OTTIENI LA TUA CHIAVE QUI: https://aistudio.google.com/app/apikey
+const GEMINI_API_KEY = "INSERISCI_QUI_LA_TUA_CHIAVE_GEMINI"; 
 
 // Inizializzazione App
 const app = initializeApp(firebaseConfig);
@@ -223,7 +229,7 @@ const UltraButton = ({ onClick, children, className = "", disabled = false, type
 );
 
 const DarkInput = ({ label, type = "text", value, onChange, placeholder, disabled = false }) => (
-  <div className="flex flex-col gap-2 mb-4 group">
+  <div className="flex flex-col gap-2 mb-4 group w-full">
     <label className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest group-focus-within:text-cyan-400 transition-colors duration-300">{label}</label>
     <input type={type} value={value} onChange={onChange} placeholder={placeholder} disabled={disabled}
       className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-700 focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500/50 transition-all disabled:opacity-50 font-medium"
@@ -299,6 +305,8 @@ export default function FitTracker() {
 
   const [mealName, setMealName] = useState('');
   const [mealCals, setMealCals] = useState('');
+  const [aiLoading, setAiLoading] = useState(false); // Stato caricamento AI
+
   const [workoutType, setWorkoutType] = useState('');
   const [workoutDuration, setWorkoutDuration] = useState('');
   const [workoutCals, setWorkoutCals] = useState('');
@@ -339,6 +347,50 @@ export default function FitTracker() {
     return () => unsubscribe();
   }, [user]);
 
+  // --- GEMINI AI FUNCTION ---
+  const handleAiEstimation = async () => {
+    if (!mealName) {
+        alert("Scrivi prima il nome del cibo!");
+        return;
+    }
+    if (GEMINI_API_KEY.includes("INSERISCI")) {
+        alert("Manca la chiave API di Gemini nel codice!");
+        return;
+    }
+
+    setAiLoading(true);
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ 
+                    parts: [{ 
+                        text: `Stima le calorie totali per una porzione media standard di: "${mealName}". Rispondi SOLO ed ESCLUSIVAMENTE con il numero intero delle calorie (es: 350). Non aggiungere testo, punti o spiegazioni.` 
+                    }] 
+                }]
+            })
+        });
+
+        const data = await response.json();
+        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        // Pulizia della risposta per trovare il numero
+        const calories = textResponse?.match(/\d+/)?.[0];
+
+        if (calories) {
+            setMealCals(calories);
+        } else {
+            alert("Non sono riuscito a stimare le calorie. Riprova specificando meglio.");
+        }
+    } catch (error) {
+        console.error("Gemini Error:", error);
+        alert("Errore di connessione con l'AI.");
+    } finally {
+        setAiLoading(false);
+    }
+  };
+
   const handleCalculator = () => {
     if (weight && distance && workoutDuration) {
       const w = parseFloat(weight), d = parseFloat(distance), t = parseFloat(workoutDuration);
@@ -363,7 +415,7 @@ export default function FitTracker() {
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      // BACK TO POPUP: Più robusto per le PWA
+      // USARE SIGNINWITHPOPUP: Più stabile del Redirect
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Login error", error);
@@ -623,7 +675,30 @@ export default function FitTracker() {
                   <SpotlightCard>
                     <form onSubmit={(e) => { e.preventDefault(); if (mealName && mealCals) addLog('meal', { name: mealName, calories: parseInt(mealCals) }); }}>
                       <DarkInput label="Data" type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
-                      <DarkInput label="Alimento" placeholder="Es. Pasta Carbonara" value={mealName} onChange={(e) => setMealName(e.target.value)} />
+                      
+                      {/* INPUT CIBO + BOTTONE AI */}
+                      <div className="flex items-end gap-2 mb-4">
+                        <div className="flex-1">
+                            <label className="text-[10px] font-bold text-fuchsia-400 uppercase tracking-widest">Alimento</label>
+                            <input 
+                                type="text" 
+                                placeholder="Es. Pasta Carbonara" 
+                                value={mealName} 
+                                onChange={(e) => setMealName(e.target.value)} 
+                                className="w-full bg-slate-950/80 border border-slate-800 rounded-lg px-4 py-3 mt-2 text-slate-200 placeholder-slate-700 focus:outline-none focus:border-fuchsia-500 focus:ring-1 focus:ring-fuchsia-500/50"
+                            />
+                        </div>
+                        <button 
+                            type="button"
+                            onClick={handleAiEstimation}
+                            disabled={aiLoading}
+                            className="bg-fuchsia-500/10 border border-fuchsia-500/50 p-3 rounded-lg text-fuchsia-400 hover:bg-fuchsia-500/20 hover:scale-105 transition-all mb-[1px]"
+                            title="Calcola con AI"
+                        >
+                            {aiLoading ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} />}
+                        </button>
+                      </div>
+
                       <DarkInput label="Kcal" type="number" placeholder="0" value={mealCals} onChange={(e) => setMealCals(e.target.value)} />
                       <div className="mt-8"><UltraButton type="submit" disabled={submitting || !mealName || !mealCals} className="w-full !border-fuchsia-500/50 hover:!bg-fuchsia-500/10"><PlusCircle size={18} /> REGISTRA DATO</UltraButton></div>
                     </form>
