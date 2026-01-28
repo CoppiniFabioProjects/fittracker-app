@@ -53,8 +53,7 @@ const firebaseConfig = {
 };
 
 // --- GEMINI AI SETUP ---
-// ⚠️ OTTIENI LA TUA CHIAVE QUI: https://aistudio.google.com/app/apikey
-const GEMINI_API_KEY = "INSERISCI_QUI_LA_TUA_CHIAVE_GEMINI"; 
+const GEMINI_API_KEY = "AIzaSyA0BAcegEDfjl1WZxWGu6ydRURDKPZZUiI"; 
 
 // Inizializzazione App
 const app = initializeApp(firebaseConfig);
