@@ -347,7 +347,7 @@ export default function FitTracker() {
     return () => unsubscribe();
   }, [user]);
 
-  // --- GEMINI AI FUNCTION CORRETTA (USANDO GEMINI-PRO) ---
+  // --- GEMINI AI FUNCTION CORRETTA (USANDO GEMINI-1.5-FLASH) ---
   const handleAiEstimation = async () => {
     if (!mealName) {
         alert("Scrivi prima il nome del cibo!");
@@ -360,8 +360,8 @@ export default function FitTracker() {
 
     setAiLoading(true);
     try {
-        // CAMBIATO MODELLO: Usiamo gemini-pro che è più stabile sulla v1beta
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+        // CAMBIATO MODELLO: Usiamo gemini-1.5-flash che è più stabile sulla v1beta
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
