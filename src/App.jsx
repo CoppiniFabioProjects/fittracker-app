@@ -53,6 +53,7 @@ const firebaseConfig = {
 };
 
 // --- GEMINI AI SETUP ---
+// Chiave recuperata dai tuoi log per correzione immediata
 const GEMINI_API_KEY = "AIzaSyA0BAcegEDfjl1WZxWGu6ydRURDKPZZUiI"; 
 
 // Inizializzazione App
@@ -346,7 +347,7 @@ export default function FitTracker() {
     return () => unsubscribe();
   }, [user]);
 
-  // --- GEMINI AI FUNCTION ---
+  // --- GEMINI AI FUNCTION CORRETTA (USANDO GEMINI-PRO) ---
   const handleAiEstimation = async () => {
     if (!mealName) {
         alert("Scrivi prima il nome del cibo!");
@@ -359,7 +360,8 @@ export default function FitTracker() {
 
     setAiLoading(true);
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        // CAMBIATO MODELLO: Usiamo gemini-pro che è più stabile sulla v1beta
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -370,6 +372,10 @@ export default function FitTracker() {
                 }]
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Errore API: ${response.status}`);
+        }
 
         const data = await response.json();
         const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -384,7 +390,7 @@ export default function FitTracker() {
         }
     } catch (error) {
         console.error("Gemini Error:", error);
-        alert("Errore di connessione con l'AI.");
+        alert("Errore AI: " + error.message);
     } finally {
         setAiLoading(false);
     }
